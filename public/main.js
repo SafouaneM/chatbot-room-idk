@@ -1,9 +1,7 @@
 //todo split it up files o_O
-import fetch from '/node-fetch'
 const socket = io();
-import dotenv from '/dotenv'
-dotenv.config()
-const apiKey = process.env.GIPHY_KEY;
+
+
 
 const registerForm = document.getElementById('register-form');
 const chatForm = document.getElementById('chat-form');
@@ -31,31 +29,12 @@ chatForm.addEventListener('submit', async (e) => {
         const message = chatInput.value;
 
         if (message.startsWith('/giphy ')) {
-            const searchTerm = message.slice(7);
-            try {
-                const response = await fetch('https://api.giphy.com/v1/gifs/search', {
-                    params: {
-                        api_key: apiKey,
-                        q: searchTerm,
-                        limit: 1,
-                    },
-                });
-
-                const gifUrl = response.data.data[0]?.images?.fixed_height?.url;
-                if (gifUrl) {
-                    socket.emit('chat message', { username, message: gifUrl });
-                } else {
-                    socket.emit('chat message', { username, message: 'No GIF found.' });
-                }
-            } catch (error) {
-                console.error('Error searching for GIF:', error);
-                socket.emit('chat message', { username, message: 'Error searching for GIF.' });
-            }
-        } else {
-            socket.emit('chat message', { username, message });
+            const searchTerm = message.slice(7)
+            socket.emit('giphy search', {searchTerm, username})
         }
-
-        chatInput.value = '';
+        else {
+            socket.emit('chat message', {username, message})
+        }
     }
 });
 
@@ -71,7 +50,6 @@ privateMessageForm.addEventListener('submit', (e) => {
     }
 });
 
-chatInput.addEventListener()
 
 socket.on('register success', (registeredUsername) => {
     username = registeredUsername;
@@ -99,8 +77,18 @@ chatInput.addEventListener('blur', () => {
 socket.on('chat message', (data) => {
     const { username, message } = data;
     const messageElement = document.createElement('div');
-    messageElement.textContent = `${username}: ${message}`;
     messageElement.classList.add('my-2', 'p-2', 'bg-gray-200', 'rounded');
+
+    if (message.startsWith('http') && (message.includes('.gif') || message.includes('.GIF'))) {
+        const img = document.createElement('img');
+        img.src = message;
+        img.alt = 'GIF';
+        messageElement.innerHTML = `${username}: `;
+        messageElement.appendChild(img);
+    } else {
+        messageElement.textContent = `${username}: ${message}`;
+    }   
+
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 });

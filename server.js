@@ -2,6 +2,11 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
+import fetch from "node-fetch"
+import dotenv from "dotenv"
+dotenv.config()
+
+
 const users = {};
 
 const app = express();
@@ -27,6 +32,26 @@ io.on('connection', (socket) => {
             io.emit('user connected', username);
             console.log('The blueteeth dewive is conektido succesvully');
 
+        }
+    });
+
+    socket.on('giphy search', async (data) => {
+        const { searchTerm, username } = data;
+        const apiKey = process.env.GIPHY_KEY;
+
+        try {
+            const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${searchTerm}&limit=1`);
+            const jsonResponse = await response.json();
+            const gifUrl = jsonResponse.data[0]?.images?.fixed_height?.url;
+
+            if (gifUrl) {
+                io.emit('chat message', { username, message: gifUrl });
+            } else {
+                io.emit('chat message', { username, message: 'No GIF found.' });
+            }
+        } catch (error) {
+            console.error('Error searching for GIF:', error);
+            io.emit('chat message', { username, message: 'Error searching for GIF.' });
         }
     });
 
