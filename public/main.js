@@ -1,7 +1,8 @@
 //todo split it up files o_O
-import fetch from 'node-fetch'
+import fetch from '/node-fetch'
 const socket = io();
-import dotenv from 'dotenv'
+import dotenv from '/dotenv'
+dotenv.config()
 const apiKey = process.env.GIPHY_KEY;
 
 const registerForm = document.getElementById('register-form');
