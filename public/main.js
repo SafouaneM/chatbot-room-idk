@@ -1,5 +1,8 @@
 //todo split it up files o_O
+import fetch from 'node-fetch'
 const socket = io();
+import dotenv from 'dotenv'
+const apiKey = process.env.GIPHY_KEY;
 
 const registerForm = document.getElementById('register-form');
 const chatForm = document.getElementById('chat-form');
@@ -21,10 +24,36 @@ registerForm.addEventListener('submit', (e) => {
     }
 });
 
-chatForm.addEventListener('submit', (e) => {
+chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (chatInput.value.trim()) {
-        socket.emit('chat message', { username, message: chatInput.value });
+        const message = chatInput.value;
+
+        if (message.startsWith('/giphy ')) {
+            const searchTerm = message.slice(7);
+            try {
+                const response = await fetch('https://api.giphy.com/v1/gifs/search', {
+                    params: {
+                        api_key: apiKey,
+                        q: searchTerm,
+                        limit: 1,
+                    },
+                });
+
+                const gifUrl = response.data.data[0]?.images?.fixed_height?.url;
+                if (gifUrl) {
+                    socket.emit('chat message', { username, message: gifUrl });
+                } else {
+                    socket.emit('chat message', { username, message: 'No GIF found.' });
+                }
+            } catch (error) {
+                console.error('Error searching for GIF:', error);
+                socket.emit('chat message', { username, message: 'Error searching for GIF.' });
+            }
+        } else {
+            socket.emit('chat message', { username, message });
+        }
+
         chatInput.value = '';
     }
 });
@@ -41,6 +70,8 @@ privateMessageForm.addEventListener('submit', (e) => {
     }
 });
 
+chatInput.addEventListener()
+
 socket.on('register success', (registeredUsername) => {
     username = registeredUsername;
     localStorage.setItem('username', registeredUsername);
@@ -54,6 +85,14 @@ socket.on('register failed', (msg) => {
 
 socket.on('register failed', (msg) => {
     alert(msg);
+});
+
+chatInput.addEventListener('input', () => {
+    socket.emit('user typing', { username });
+});
+
+chatInput.addEventListener('blur', () => {
+    socket.emit('user stopped typing', { username });
 });
 
 socket.on('chat message', (data) => {
@@ -74,6 +113,8 @@ socket.on('private message', (data) => {
     privateMessages.scrollTop = privateMessages.scrollHeight;
 });
 
+
+
 socket.on('user connected', (newUser) => {
     const userElement = document.createElement('option');
     userElement.value = newUser;
@@ -90,6 +131,29 @@ socket.on('user disconnected', (disconnectedUser) => {
     }
 });
 
+socket.on('user typing', (data) => {
+    const { typingUsername } = data;
+    if (typingUsername !== username) {
+        document.getElementById('typing-status').textContent = `${typingUsername} is typing...`;
+    }
+});
+
+socket.on('user stopped typing', (data) => {
+    const { typingUsername } = data;
+    if (typingUsername !== username) {
+        document.getElementById('typing-status').textContent = '';
+    }
+});
+
+socket.on('user typing', (data) => {
+    const { username } = data;
+    socket.broadcast.emit('user typing', { username });
+});
+
+socket.on('user stopped typing', (data) => {
+    const { username } = data;
+    socket.broadcast.emit('user stopped typing', { username });
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     const storedUsername = localStorage.getItem('username');
