@@ -7,6 +7,7 @@ const users = {};
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const port = process.env.PORT || 3100;
 
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
@@ -55,8 +56,8 @@ io.on('connection', (socket) => {
 });
 
 
-server.listen(3100, () => {
-    console.log('listening on port 3100');
+server.listen(port, () => {
+    console.log(`Server started on port ${port}`);
 });
 
 
