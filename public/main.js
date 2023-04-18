@@ -87,7 +87,7 @@ socket.on('chat message', (data) => {
         messageElement.appendChild(img);
     } else {
         messageElement.textContent = `${username}: ${message}`;
-    }   
+    }
 
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -134,15 +134,7 @@ socket.on('user stopped typing', (data) => {
     }
 });
 
-socket.on('user typing', (data) => {
-    const { username } = data;
-    socket.broadcast.emit('user typing', { username });
-});
 
-socket.on('user stopped typing', (data) => {
-    const { username } = data;
-    socket.broadcast.emit('user stopped typing', { username });
-});
 
 document.addEventListener('DOMContentLoaded', () => {
     const storedUsername = localStorage.getItem('username');

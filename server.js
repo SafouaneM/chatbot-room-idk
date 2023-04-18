@@ -22,6 +22,17 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+
+    socket.on('user typing', (data) => {
+        const { username } = data;
+        socket.broadcast.emit('user typing', { username });
+    });
+
+    socket.on('user stopped typing', (data) => {
+        const { username } = data;
+        socket.broadcast.emit('user stopped typing', { username });
+    });
+
     console.log('The blueteeth dewive is rewdy to paaihr');
     socket.on('register user', (username) => {
         if (users[username]) {
